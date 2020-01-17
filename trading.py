@@ -56,6 +56,14 @@ def get_book_order_of_asset(asset):
         return
     print(response.json())
      
+# read agregated trading data (candles)
+def refresh_data_candle(pair,duration):
+    response = requests.get('https://api-public.sandbox.pro.coinbase.com/products/{}/candles?granularity{}'.format(pair,duration*60), auth=auth)
+    if(response.status_code == 404):
+        print("not found , please verify the spelling of the asset ")
+        return
+    print(response.json())
+
 
 
 
@@ -65,5 +73,5 @@ def get_book_order_of_asset(asset):
 
 #get_all_crypto_currency()
 #get_depth('bid','BTC-USD')
-get_book_order_of_asset('BTC-USD')
-
+#get_book_order_of_asset('BTC-USD')
+refresh_data_candle('BTC-USD',5)
