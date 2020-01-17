@@ -1,6 +1,8 @@
 import json,hmac, hashlib, time, requests, base64
 from requests.auth import AuthBase
 from conf import conf
+import sqlite3
+from sqlite3 import Error
 #get list of all availables cryptocurrencies and display it 
 def get_all_crypto_currency():
     url = 'https://rest.coinapi.io/v1/assets'
@@ -57,6 +59,8 @@ def get_book_order_of_asset(asset):
     print(response.json())
      
 # read agregated trading data (candles)
+#Pair is the name of the asset
+#Duration is in minutes 
 def refresh_data_candle(pair,duration):
     response = requests.get('https://api-public.sandbox.pro.coinbase.com/products/{}/candles?granularity{}'.format(pair,duration*60), auth=auth)
     if(response.status_code == 404):
@@ -64,14 +68,46 @@ def refresh_data_candle(pair,duration):
         return
     print(response.json())
 
+#let's create a connection with the SQLITE Table
+
+def create_connection_sqlite(db_file):
+    try :
+        conn =sqlite3.connect(db_file)
+        return conn
+    except Error as e:
+        print(e)
+
+conn=create_connection_sqlite("sql_file.db")
+
+#print(conn)
+connection = conn.cursor()
+print(connection)
+##The code in order to create SQLITE table if not exists
+#Create the last_checks table , this table will hold the last_check when we update other tables for example , we add a line in this table 
+connection.execute('''CREATE TABLE IF NOT EXISTS last_checks(Id INTEGER PRIMARY KEY, exchange TEXT, trading_pair TEXT, durationTEXT, table_name TEXT, last_check INT, startdate INT,last_id INT)''')
+#Create candle table
+#first example with pair=BTC-USD and duration =5
+exchange_name='CoinBase'
+pair='BTC-USD'
+#5 minutes 
+duration=5 
+#print(pair.replace('-','_'))
+
+set_table_name = str(exchange_name + "_" + pair.replace('-','_') + "_"+ str(duration))
+table_creation_statement = '''CREATE TABLE IF NOT EXISTS '''+set_table_name + '''(Id INTEGER PRIMARY KEY, date INT, high REAL, low REAL, open REAL, close REAL,volume REAL)'''
+#print(table_creation_statement) 
+connection.execute(table_creation_statement)
+print(connection)  
 
 
 
-    
-    
-#Test functions  
+
+
+
+
+#Test functions  with examples
 
 #get_all_crypto_currency()
 #get_depth('bid','BTC-USD')
 #get_book_order_of_asset('BTC-USD')
-refresh_data_candle('BTC-USD',5)
+#refresh_data_candle('BTC-USD',5)
