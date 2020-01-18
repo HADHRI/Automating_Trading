@@ -154,7 +154,7 @@ def refresh_data(pair):
 
 
 # Task List Post to REST API
-# I put BTC_USD As default pair and Limit order as order type default value 
+# I put BTC-USD As default pair and Limit order as limite type default value 
 def create_order(direction,price,amount,pair = 'BTC-USD', orderType = 'limit'):
      # construct the json to send 
     send_value = {
@@ -170,6 +170,14 @@ def create_order(direction,price,amount,pair = 'BTC-USD', orderType = 'limit'):
         return
     print(response.json())
 
+
+# Post http with providing order id  in order to cancel an order 
+def cancel_order(id):
+    res = requests.post('https://api-public.sandbox.pro.coinbase.com/orders{}'.format(id), auth=auth)
+    return res.json()
+
+
+ 
 
 
 
@@ -196,4 +204,5 @@ def create_order(direction,price,amount,pair = 'BTC-USD', orderType = 'limit'):
 
 
 #POST TASK LIST 
-create_order('sell',0.20000000,0.10000000) # I want to test it , I think it works but I don't have enough funds 
+#create_order('sell',0.20000000,0.10000000) # I want to test it , I think it works but I don't have enough funds 
+cancel_order(2)
