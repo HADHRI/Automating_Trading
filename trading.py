@@ -4,6 +4,11 @@ from conf import conf
 import sqlite3
 from sqlite3 import Error
 from datetime import datetime
+from dateutil import parser
+
+
+
+
 #get list of all availables cryptocurrencies and display it 
 def get_all_crypto_currency():
     url = 'https://rest.coinapi.io/v1/assets'
@@ -128,6 +133,28 @@ def refresh_data_candle(pair,duration):
     
 
 
+# get all available trade data for an asset
+def refresh_data(pair):
+    response = requests.get('https://api-public.sandbox.pro.coinbase.com/products/{}/trades'.format(pair), auth=auth)
+    if(response.status_code == 404):
+        print("not found ")
+        return
+    setTableName = str(exchange_name + "_" +  pair.replace('-','_'))
+    table_creation_statement =  '''CREATE TABLE IF NOT EXISTS ''' +setTableName + '''(Id INTEGER PRIMARY KEY, uuid TEXT, traded_btc REAL, price REAL, created_at_int INT, side TEXT)'''
+    connection.execute(table_creation_statement)
+    res=response.json()
+    for var in response.json():
+        #print(var)
+        sql = '''INSERT INTO ''' +  setTableName +'''(uuid,traded_btc,price,created_at_int,side) VALUES (?,?,?,?,?)'''
+        connection.execute(sql,[var.get('trace_id'), var.get('size'), var.get('price'),datetime.timestamp(parser.isoparse(var.get('time'))), var.get('side')])
+    last_id = connection.lastrowid
+    # insert in last check table 
+    last_day=res[len(res)-1]['time']
+    connection.execute('''INSERT INTO last_checks(exchange,trading_pair,duration,table_name,last_check,startdate,last_id) VALUES(?,?,?,?,?,?,?)''',[exchange_name, pair, 0, setTableName, datetime.now(), datetime.timestamp(parser.isoparse(last_day)), last_id])
+
+
+    
+
 
 
 
@@ -136,9 +163,16 @@ def refresh_data_candle(pair,duration):
 #get_all_crypto_currency()
 #get_depth('bid','BTC-USD')
 #get_book_order_of_asset('BTC-USD')
-refresh_data_candle('BTC-USD',5)
+#refresh_data_candle('BTC-USD',5)
+refresh_data('BTC-USD')
+
 #verify that data are inserted in table of BTC_USD  with select * query 
-for var in connection.execute('''SELECT * FROM ''' + set_table_name ):
+#for var in connection.execute('''SELECT * FROM ''' + set_table_name ):
+    #print(var)
+
+full_data_set="CoinBase_BTC_USD"
+#verify that data are inserted in full data set
+for var in connection.execute('''SELECT * FROM ''' + full_data_set ):
     print(var)
 
 
