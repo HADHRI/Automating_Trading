@@ -105,14 +105,20 @@ def refresh_data_candle(pair,duration):
     set_table_name = str(exchange_name + "_" + pair.replace('-','_') + "_"+ str(duration))
     table_creation_statement = '''CREATE TABLE IF NOT EXISTS '''+set_table_name + '''(Id INTEGER PRIMARY KEY, date INT, high REAL, low REAL, open REAL, close REAL,volume REAL)'''
     connection.execute(table_creation_statement)
-  
+    res=response.json()
+    #Update table only if candle data is available
+    #get last day from specific candle table and then compare it
+    last_date=1 
+    last_date = connection.execute('''SELECT date FROM ''' +  set_table_name + ''' ORDER BY date  LIMIT 1''').fetchone() 
+    if(res[0][0] == last_date):
+        return
     for var in response.json():
         #print(var)
         sql = ''' INSERT INTO '''+set_table_name+'''(date,high,low,open,close,volume) VALUES(?,?,?,?,?,?)'''
         connection.execute(sql,[var[0], var[2], var[1], var[3], var[4], var[5]])
     last_id = connection.lastrowid
     #Adding the information that we have updated this table to LAST_check table
-    res=response.json()
+    
     #last date inserted in the pair table 
     #print(res[len(res)-1][0])
     last_day=res[len(res)-1][0]
