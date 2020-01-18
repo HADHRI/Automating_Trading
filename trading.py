@@ -109,7 +109,7 @@ def refresh_data_candle(pair,duration):
     #Update table only if candle data is available
     #get last day from specific candle table and then compare it
     last_date=1 
-    last_date = connection.execute('''SELECT date FROM ''' +  set_table_name + ''' ORDER BY date  LIMIT 1''').fetchone() 
+    last_date = connection.execute('''SELECT date FROM ''' +  set_table_name + ''' ORDER BY date DESC LIMIT 1''').fetchone() 
     if(res[0][0] == last_date):
         return
     for var in response.json():
