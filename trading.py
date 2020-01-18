@@ -3,6 +3,7 @@ from requests.auth import AuthBase
 from conf import conf
 import sqlite3
 from sqlite3 import Error
+from datetime import datetime
 #get list of all availables cryptocurrencies and display it 
 def get_all_crypto_currency():
     url = 'https://rest.coinapi.io/v1/assets'
@@ -76,7 +77,7 @@ connection = conn.cursor()
 print(connection)
 ##The code in order to create SQLITE table if not exists
 #Create the last_checks table , this table will hold the last_check when we update other tables for example , we add a line in this table 
-connection.execute('''CREATE TABLE IF NOT EXISTS last_checks(Id INTEGER PRIMARY KEY, exchange TEXT, trading_pair TEXT, durationTEXT, table_name TEXT, last_check INT, startdate INT,last_id INT)''')
+connection.execute('''CREATE TABLE IF NOT EXISTS last_checks(Id INTEGER PRIMARY KEY, exchange TEXT, trading_pair TEXT, duration TEXT, table_name TEXT, last_check INT, startdate INT,last_id INT)''')
 #Create candle table
 #first example with pair=BTC-USD and duration =5
 exchange_name='CoinBase'
@@ -109,6 +110,15 @@ def refresh_data_candle(pair,duration):
         #print(var)
         sql = ''' INSERT INTO '''+set_table_name+'''(date,high,low,open,close,volume) VALUES(?,?,?,?,?,?)'''
         connection.execute(sql,[var[0], var[2], var[1], var[3], var[4], var[5]])
+    last_id = connection.lastrowid
+    #Adding the information that we have updated this table to LAST_check table
+    res=response.json()
+    #last date inserted in the pair table 
+    #print(res[len(res)-1][0])
+    last_day=res[len(res)-1][0]
+    connection.execute('''INSERT INTO last_checks(exchange,trading_pair,duration,table_name,last_check,startdate,last_id)
+            VALUES(?,?,?,?,?,?,?)''',[exchange_name, pair, duration,  set_table_name, datetime.now(), last_day, last_id])
+ 
     
 
 
