@@ -153,7 +153,26 @@ def refresh_data(pair):
     connection.execute('''INSERT INTO last_checks(exchange,trading_pair,duration,table_name,last_check,startdate,last_id) VALUES(?,?,?,?,?,?,?)''',[exchange_name, pair, 0, setTableName, datetime.now(), datetime.timestamp(parser.isoparse(last_day)), last_id])
 
 
-    
+# Task List Post to REST API
+# I put BTC_USD As default pair and Limit order as order type default value 
+def create_order(direction,price,amount,pair = 'BTC-USD', orderType = 'limit'):
+     # construct the json to send 
+    send_value = {
+    'side': direction,
+    'price': price,
+    'size': amount,
+    'product_id': pair,
+    'type': orderType
+    }
+    response = requests.post('https://api-public.sandbox.pro.coinbase.com/orders',json=send_value, auth=auth)
+    if(response.status_code == 404):
+        print("Something went worng ")
+        return
+    print(response.json())
+
+
+
+
 
 
 
@@ -164,15 +183,17 @@ def refresh_data(pair):
 #get_depth('bid','BTC-USD')
 #get_book_order_of_asset('BTC-USD')
 #refresh_data_candle('BTC-USD',5)
-refresh_data('BTC-USD')
+#refresh_data('BTC-USD')
 
 #verify that data are inserted in table of BTC_USD  with select * query 
 #for var in connection.execute('''SELECT * FROM ''' + set_table_name ):
     #print(var)
 
-full_data_set="CoinBase_BTC_USD"
+#full_data_set="CoinBase_BTC_USD"
 #verify that data are inserted in full data set
-for var in connection.execute('''SELECT * FROM ''' + full_data_set ):
-    print(var)
+#for var in connection.execute('''SELECT * FROM ''' + full_data_set ):
+    #print(var)
 
 
+#POST TASK LIST 
+create_order('sell',0.20000000,0.10000000) # I want to test it , I think it works but I don't have enough funds 
