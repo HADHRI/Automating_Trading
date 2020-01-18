@@ -58,15 +58,7 @@ def get_book_order_of_asset(asset):
         return
     print(response.json())
      
-# read agregated trading data (candles)
-#Pair is the name of the asset
-#Duration is in minutes 
-def refresh_data_candle(pair,duration):
-    response = requests.get('https://api-public.sandbox.pro.coinbase.com/products/{}/candles?granularity{}'.format(pair,duration*60), auth=auth)
-    if(response.status_code == 404):
-        print("not found , please verify the spelling of the asset ")
-        return
-    print(response.json())
+
 
 #let's create a connection with the SQLITE Table
 
@@ -97,9 +89,27 @@ set_table_name = str(exchange_name + "_" + pair.replace('-','_') + "_"+ str(dura
 table_creation_statement = '''CREATE TABLE IF NOT EXISTS '''+set_table_name + '''(Id INTEGER PRIMARY KEY, date INT, high REAL, low REAL, open REAL, close REAL,volume REAL)'''
 #print(table_creation_statement) 
 connection.execute(table_creation_statement)
-print(connection)  
+#print(connection)  
 
-
+# read agregated trading data (candles)
+#Pair is the name of the asset
+#Duration is in minutes 
+def refresh_data_candle(pair,duration):
+    response = requests.get('https://api-public.sandbox.pro.coinbase.com/products/{}/candles?granularity{}'.format(pair,duration*60), auth=auth)
+    if(response.status_code == 404):
+        print("not found , please verify the spelling of the asset ")
+        return
+    #store data in the candle table 
+    #get Table Name 
+    set_table_name = str(exchange_name + "_" + pair.replace('-','_') + "_"+ str(duration))
+    table_creation_statement = '''CREATE TABLE IF NOT EXISTS '''+set_table_name + '''(Id INTEGER PRIMARY KEY, date INT, high REAL, low REAL, open REAL, close REAL,volume REAL)'''
+    connection.execute(table_creation_statement)
+  
+    for var in response.json():
+        #print(var)
+        sql = ''' INSERT INTO '''+set_table_name+'''(date,high,low,open,close,volume) VALUES(?,?,?,?,?,?)'''
+        connection.execute(sql,[var[0], var[2], var[1], var[3], var[4], var[5]])
+    
 
 
 
@@ -110,4 +120,9 @@ print(connection)
 #get_all_crypto_currency()
 #get_depth('bid','BTC-USD')
 #get_book_order_of_asset('BTC-USD')
-#refresh_data_candle('BTC-USD',5)
+refresh_data_candle('BTC-USD',5)
+#verify that data are inserted in table of BTC_USD  with select * query 
+for var in connection.execute('''SELECT * FROM ''' + set_table_name ):
+    print(var)
+
+
